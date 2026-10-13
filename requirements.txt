@@ -6,5 +6,6 @@ pydantic-settings
 PyJWT
 httpx
 python-multipart
+email-validator
 pytest
 
