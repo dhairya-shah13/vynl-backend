@@ -34,7 +34,7 @@ All backend routers are mounted dual-path under both `/v1` and `/api/v1`:
 - `POST /v1/auth/logout`: Clears session cookies.
 
 ### Lyrics Proxy
-- `GET /v1/lyrics?title=&artist=&album=&duration=&track_id=`: Queries LRCLIB (`GET /get` with `GET /search` fallback), strips title noise, enforces English Latin-script check (>15% non-Latin rejected), and returns `{ "status": "synced" | "plain" | "none", "synced_lines": [...], "plain_lines": [...], "is_instrumental": bool }`. Requires user authentication. Dual-mounted on `/v1` and `/api/v1`.
+- `GET /v1/lyrics?title=&artist=&album=&duration=&track_id=`: Queries LRCLIB (`GET /get` with `GET /search` fallback), strips title noise and embedded artist suffixes, enforces English Latin-script check (>15% non-Latin rejected), and returns `{ "status": "synced" | "plain" | "none", "synced_lines": [...], "plain_lines": [...], "is_instrumental": bool }`. Supports authenticated sessions with fallback for unauthenticated guest listening (`get_current_user_or_guest`). Dual-mounted on `/v1` and `/api/v1`.
 
 ### Activity & Recommendations
 - `POST /v1/activity/batch`: Telemetry batch ingestion.

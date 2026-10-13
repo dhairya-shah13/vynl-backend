@@ -4,6 +4,30 @@ All notable changes to the VYNL core backend service are documented in this file
 
 ---
 
+## [2026-10-14 00:36]
+
+### [Category: Dev] — Title Noise Artist Stripping & Guest Authentication Support
+What changed:
+- Updated `clean_track_title` in `app/services/lyrics_service.py` to accept artist name and strip artist suffixes like `- <Artist> -` or `- <Artist>` from track titles (e.g. converting `"Die For You - The Weeknd -"` to `"Die For You"`).
+- Updated `normalize_cache_key` and `LyricsService.get_lyrics` to pass artist into `clean_track_title`.
+- Implemented `get_current_user_or_guest` dependency in `app/api/lyrics.py` to gracefully fall back to guest identity when unauthenticated visitors play music without signing in.
+- Restarted backend uvicorn service with `--reload` enabled.
+- Verified in-browser playback: synchronized lyrics for "Die For You - The Weeknd -" fetch successfully (59 synced lines), display in the panel, and highlight actively during playback.
+- Unit tests: 16/16 backend pytest tests passing.
+
+Why:
+- Fixes the bug where playing trending tracks rendered "No lyrics available for this track" due to embedded artist suffixes in track titles and missing guest authentication fallback.
+
+Bug fixed (if applicable):
+- Lyrics panel displayed "No lyrics available for this track" when playing trending songs like "Die For You - The Weeknd -".
+
+Root cause (if applicable):
+- Track titles in VYNL's database include trailing artist suffixes (`{Title} - {Artist} -`). Without stripping this suffix, LRCLIB returned 404 Not Found for `track_name="Die For You - The Weeknd"`.
+- The lyrics endpoint strictly required an authenticated user token via `get_current_user`, causing 401 Unauthorized for visitors listening without logging in.
+- The previous backend process was started without `--reload` and had not loaded the new lyrics router into memory.
+
+---
+
 ## [2026-10-14 00:25]
 
 ### [Category: Dev] — Lyrics Proxy Service & MongoDB TTL Caching
