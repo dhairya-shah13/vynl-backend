@@ -12,6 +12,10 @@ class CreatePlaylistRequest(BaseModel):
 
 class AddTrackRequest(BaseModel):
     track_id: str
+    title: Optional[str] = None
+    artist: Optional[str] = None
+    cover_url: Optional[str] = None
+    duration_seconds: Optional[int] = None
 
 @router.get("/")
 async def get_user_playlists(user_id: str = Depends(get_current_user), db=Depends(get_db)):
@@ -49,7 +53,13 @@ async def add_track_to_playlist(
     db=Depends(get_db)
 ):
     service = PlaylistService(db)
-    added = await service.add_track(user_id, playlist_id, req.track_id)
+    meta = {
+        "title": req.title,
+        "artist": req.artist,
+        "cover_url": req.cover_url,
+        "duration_seconds": req.duration_seconds,
+    }
+    added = await service.add_track(user_id, playlist_id, req.track_id, meta=meta)
     if not added:
         raise HTTPException(status_code=404, detail="Playlist not found")
     return {"status": "added", "track_id": req.track_id}

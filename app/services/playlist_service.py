@@ -34,11 +34,17 @@ class PlaylistService:
             for t in tracks:
                 meta = track_map.get(t.get("track_id"))
                 if meta:
-                    t["title"] = meta.get("title") or "Unknown Title"
-                    t["artist"] = meta.get("artist") or "Unknown Artist"
-                    t["album"] = meta.get("album") or ""
-                    t["cover_url"] = meta.get("cover_url") or meta.get("artwork_url") or ""
-                    t["duration_seconds"] = meta.get("duration_seconds") or 0
+                    t["title"] = meta.get("title") or t.get("title") or "Unknown Title"
+                    t["artist"] = meta.get("artist") or t.get("artist") or "Unknown Artist"
+                    t["album"] = meta.get("album") or t.get("album") or ""
+                    t["cover_url"] = meta.get("cover_url") or meta.get("artwork_url") or t.get("cover_url") or ""
+                    t["duration_seconds"] = meta.get("duration_seconds") or t.get("duration_seconds") or 0
+        for t in tracks:
+            t.setdefault("title", "Unknown Title")
+            t.setdefault("artist", "Unknown Artist")
+            t.setdefault("album", "")
+            t.setdefault("cover_url", "")
+            t.setdefault("duration_seconds", 0)
         return serialize_mongo_doc(doc)
 
     async def create_playlist(self, user_id: str, name: str, description: str = "") -> Dict[str, Any]:
@@ -64,14 +70,38 @@ class PlaylistService:
         res = await self.db.playlists.delete_one({"user_id": user_id, "playlist_id": playlist_id})
         return res.deleted_count > 0
 
-    async def add_track(self, user_id: str, playlist_id: str, track_id: str) -> bool:
+    async def add_track(self, user_id: str, playlist_id: str, track_id: str, meta: Optional[Dict[str, Any]] = None) -> bool:
         if self.db is None:
             return False
+
+        # Idempotent: avoid duplicate tracks in the same playlist
+        existing = await self.db.playlists.find_one({
+            "user_id": user_id,
+            "playlist_id": playlist_id,
+            "tracks.track_id": track_id,
+        })
+        if existing:
+            return True
+
         now = datetime.now(timezone.utc)
+        track_entry = {
+            "track_id": track_id,
+            "added_at": now,
+        }
+        if meta:
+            if meta.get("title"):
+                track_entry["title"] = meta["title"]
+            if meta.get("artist"):
+                track_entry["artist"] = meta["artist"]
+            if meta.get("cover_url"):
+                track_entry["cover_url"] = meta["cover_url"]
+            if meta.get("duration_seconds") is not None:
+                track_entry["duration_seconds"] = meta["duration_seconds"]
+
         res = await self.db.playlists.update_one(
             {"user_id": user_id, "playlist_id": playlist_id},
             {
-                "$push": {"tracks": {"track_id": track_id, "added_at": now}},
+                "$push": {"tracks": track_entry},
                 "$inc": {"track_count": 1},
                 "$set": {"updated_at": now},
             }

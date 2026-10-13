@@ -79,3 +79,33 @@ def test_recommendation_diversification():
     queen_tracks = [t for t in results if t["artist"] == "Queen"]
     assert len(queen_tracks) == 2
     assert len(results) == 3
+
+@pytest.mark.anyio
+async def test_playlist_creation_and_track_structure():
+    from unittest.mock import AsyncMock, MagicMock
+    mock_db = MagicMock()
+    mock_db.playlists = MagicMock()
+    mock_db.playlists.insert_one = AsyncMock()
+    mock_db.playlists.find_one = AsyncMock(return_value=None)
+    mock_db.playlists.update_one = AsyncMock(return_value=MagicMock(modified_count=1))
+
+    from app.services.playlist_service import PlaylistService
+    service = PlaylistService(mock_db)
+
+    # 1. Test create playlist
+    created = await service.create_playlist("user-1", "My Lo-Fi Beats")
+    assert created["name"] == "My Lo-Fi Beats"
+    assert created["user_id"] == "user-1"
+    assert "playlist_id" in created
+    assert created["track_count"] == 0
+
+    # 2. Test add track with metadata
+    meta = {
+        "title": "Midnight City",
+        "artist": "M83",
+        "cover_url": "https://example.com/art.jpg",
+        "duration_seconds": 240,
+    }
+    success = await service.add_track("user-1", created["playlist_id"], "track-xyz", meta=meta)
+    assert success is True
+    assert mock_db.playlists.update_one.called
