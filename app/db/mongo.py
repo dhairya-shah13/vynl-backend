@@ -24,6 +24,8 @@ async def init_indexes():
         await db_manager.db.listening_history.create_index([("user_id", 1), ("played_at", -1)])
         await db_manager.db.listening_history.create_index([("user_id", 1), ("track_id", 1)])
         await db_manager.db.library.create_index([("user_id", 1), ("track_id", 1)], unique=True)
+        await db_manager.db.lyrics_cache.create_index("cache_key", unique=True)
+        await db_manager.db.lyrics_cache.create_index("expire_at", expireAfterSeconds=0)
         logger.info("MongoDB indexes verified successfully.")
     except Exception as exc:
         logger.warning("Index creation deferred or failed (MongoDB might be connecting): %s", exc)

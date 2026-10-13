@@ -39,7 +39,7 @@ app.add_middleware(
 )
 
 
-from app.api import auth, activity, recommendations, library, playlists, history, onboarding, tracks
+from app.api import auth, activity, recommendations, library, playlists, history, onboarding, tracks, lyrics
 
 api_routers = [
     auth.router,
@@ -50,6 +50,7 @@ api_routers = [
     history.router,
     onboarding.router,
     tracks.router,
+    lyrics.router,
 ]
 
 for router in api_routers:

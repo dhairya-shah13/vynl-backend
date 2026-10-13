@@ -33,6 +33,9 @@ All backend routers are mounted dual-path under both `/v1` and `/api/v1`:
 - `GET /v1/auth/google/callback?code=dev_mock_code`: Development mock login setting session cookies.
 - `POST /v1/auth/logout`: Clears session cookies.
 
+### Lyrics Proxy
+- `GET /v1/lyrics?title=&artist=&album=&duration=&track_id=`: Queries LRCLIB (`GET /get` with `GET /search` fallback), strips title noise, enforces English Latin-script check (>15% non-Latin rejected), and returns `{ "status": "synced" | "plain" | "none", "synced_lines": [...], "plain_lines": [...], "is_instrumental": bool }`. Requires user authentication. Dual-mounted on `/v1` and `/api/v1`.
+
 ### Activity & Recommendations
 - `POST /v1/activity/batch`: Telemetry batch ingestion.
 - `GET /v1/recommendations/for-you`: Personalized feed.
@@ -50,6 +53,7 @@ All backend routers are mounted dual-path under both `/v1` and `/api/v1`:
   - `playlists`: `{ playlist_id, user_id, name, description, tracks: [{ track_id, title, artist, cover_url, duration_seconds, added_at }], track_count, created_at, updated_at }`.
   - `library`: User saved tracks.
   - `listening_history`: Historical plays and duration metrics.
+  - `lyrics_cache`: `{ cache_key: "title|artist|duration", title, artist, duration, status, synced_lines, plain_lines, is_instrumental, created_at, expire_at }` with TTL index on `expire_at` (7 days for hits, 1 day for misses) and unique index on `cache_key`.
 
 ---
 

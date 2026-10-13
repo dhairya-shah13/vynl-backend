@@ -4,6 +4,20 @@ All notable changes to the VYNL core backend service are documented in this file
 
 ---
 
+## [2026-10-14 00:25]
+
+### [Category: Dev] — Lyrics Proxy Service & MongoDB TTL Caching
+What changed:
+- Implemented `GET /v1/lyrics` (and dual-mounted `/api/v1/lyrics`) in `app/api/lyrics.py` requiring authentication via `get_current_user`.
+- Built `LyricsService` (`app/services/lyrics_service.py`) querying LRCLIB API (`GET /get` with `GET /search` fallback and duration scoring), title noise stripping, and Latin-script language filtering (>15% non-Latin rejected).
+- Integrated MongoDB `lyrics_cache` in `vynl_backend` with TTL expiration indexes (7 days for hits, 1 day for misses) and unique `cache_key` indexing in `app/db/mongo.py`.
+- Created comprehensive test suite in `tests/test_lyrics.py` covering synced lyrics, plain-only lyrics, 404 search fallback, timeout resilience, cache hit/miss TTL, instrumental flag, and non-Latin script rejection (16/16 tests passing).
+
+Why:
+- Provides a high-performance proxy for synchronized and plain lyrics with automatic database caching and Latin-script filtering, protecting third-party rate limits and delivering instant responses to client requests.
+
+---
+
 ## [2026-10-14 00:05]
 
 ### [Category: Dev] — Context & Documentation Update
